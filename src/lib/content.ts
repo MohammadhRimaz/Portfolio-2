@@ -9,7 +9,8 @@ export const getProjects = async (): Promise<Project[]> => {
   const { data, error } = await supabase
     .from("projects")
     .select("*")
-    .order("order", { ascending: true });
+    .eq("published", true)
+    .order("inserted_at", { ascending: false });
   if (error || !data) return fallbackProjects;
   return data as Project[];
 };

@@ -681,11 +681,11 @@ video {
 .max-w-6xl {
   max-width: 72rem;
 }
-.max-w-\[360px\] {
-  max-width: 360px;
-}
 .max-w-\[180px\] {
   max-width: 180px;
+}
+.max-w-\[360px\] {
+  max-width: 360px;
 }
 .flex-1 {
   flex: 1 1 0%;
@@ -837,6 +837,10 @@ video {
 .p-6 {
   padding: 1.5rem;
 }
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
 .px-3 {
   padding-left: 0.75rem;
   padding-right: 0.75rem;
@@ -876,10 +880,6 @@ video {
 .py-4 {
   padding-top: 1rem;
   padding-bottom: 1rem;
-}
-.px-2 {
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
 }
 .pb-10 {
   padding-bottom: 2.5rem;
