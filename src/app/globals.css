@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: radial-gradient(circle at 10% 20%, #0f172a 10%, transparent 20%),
+    radial-gradient(circle at 90% 10%, #0ea5e9 10%, transparent 20%),
+    radial-gradient(circle at 40% 80%, #22d3ee 12%, transparent 20%),
+    #0b1224;
+  color: #e2e8f0;
+}
+
+html.light body {
+  background: radial-gradient(circle at 10% 20%, #e0f2fe 10%, transparent 20%),
+    radial-gradient(circle at 90% 10%, #cffafe 10%, transparent 20%),
+    radial-gradient(circle at 40% 80%, #bae6fd 12%, transparent 20%),
+    #f8fafc;
+  color: #0f172a;
+}
+
+.glass {
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.light .glass {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
