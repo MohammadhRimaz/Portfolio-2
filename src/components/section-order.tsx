@@ -32,7 +32,7 @@ export const SectionOrderControl = ({ onChange }: Props) => {
   };
 
   return (
-    <div className="glass flex flex-wrap items-center gap-2 rounded-2xl border px-3 py-2 text-xs shadow-glass">
+    <div className="glass flex flex-wrap items-center justify-center gap-2 rounded-2xl border px-3 py-2 text-xs shadow-glass">
       <span className="font-semibold">Section order:</span>
       {order.map((key, idx) => (
         <span key={key} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1">

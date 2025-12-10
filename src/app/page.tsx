@@ -14,12 +14,12 @@ export default async function Page() {
     <main className="min-h-screen">
       <div
         id="home"
-        className="relative overflow-hidden bg-gradient-to-b from-slate-900/40 to-slate-950 pb-10"
+        className="relative flex min-h-screen items-center overflow-hidden bg-gradient-to-b from-slate-900/40 to-slate-950 pb-10"
       >
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(14,165,233,.35),transparent_30%),radial-gradient(circle_at_80%_0%,rgba(236,72,153,.25),transparent_25%)]" />
-        <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pt-6 lg:px-6">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(14,165,233,.22),transparent_32%),radial-gradient(circle_at_80%_0%,rgba(236,72,153,.18),transparent_28%)]" />
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pt-2 lg:px-6 lg:gap-6">
           <Header />
-          <div className="grid gap-8 rounded-3xl border border-white/10 bg-white/5 p-8 shadow-glass lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="grid gap-6 rounded-3xl border border-white/10 bg-white/80 p-6 shadow-glass backdrop-blur dark:bg-white/5 lg:grid-cols-[1.2fr_0.8fr] lg:gap-8 lg:p-8">
             <div className="space-y-4">
               <p className="text-sm uppercase tracking-[0.25em] text-cyan-200">
                 Full-Stack Developer

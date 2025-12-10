@@ -19,7 +19,8 @@ export const ContactForm = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors }
+    formState: { errors },
+    reset
   } = useForm<FormData>({ resolver: zodResolver(schema) });
   const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">(
     "idle"
@@ -37,7 +38,9 @@ export const ContactForm = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
       });
-      setStatus(res.ok ? "sent" : "error");
+      const ok = res.ok;
+      setStatus(ok ? "sent" : "error");
+      if (ok) reset();
     } catch (err) {
       console.error(err);
       setStatus("error");
@@ -63,7 +66,7 @@ export const ContactForm = () => {
       <div>
         <label className="text-sm">Email</label>
         <input
-          className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-cyan-300"
+          className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-base outline-none focus:border-cyan-300"
           {...register("email")}
           placeholder="you@example.com"
           type="email"
@@ -75,7 +78,7 @@ export const ContactForm = () => {
       <div>
         <label className="text-sm">Message</label>
         <textarea
-          className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-cyan-300"
+          className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-base outline-none focus:border-cyan-300"
           rows={4}
           {...register("message")}
           placeholder="Tell me about your project or role"

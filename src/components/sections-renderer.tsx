@@ -32,25 +32,12 @@ export const SectionsRenderer = ({
     () => ({
       about: (
         <Section id="about" title="About">
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6">
             <p className="text-lg text-slate-200">
-              I build fast, resilient web apps with Next.js, Tailwind, and Supabase. I care about
-              clean architecture, sensible DX, and shipping quickly.
+              I build fast, resilient web apps with Next.js, Tailwind, and Supabase. I focus on
+              clean architecture, sensible DX, and shipping quickly with accessibility and
+              performance in mind.
             </p>
-            <div className="grid gap-3 text-sm text-slate-200">
-              <div>
-                <p className="font-semibold text-white">Qualifications</p>
-                <p>Full-stack delivery · API design · DevOps on Vercel</p>
-              </div>
-              <div>
-                <p className="font-semibold text-white">Skills</p>
-                <p>TypeScript · Next.js · Supabase · Tailwind · Node · Edge</p>
-              </div>
-              <div>
-                <p className="font-semibold text-white">Achievements</p>
-                <p>Scaled SaaS to 50k MAU, 99.95% uptime, shipped &lt;2s LCP.</p>
-              </div>
-            </div>
           </div>
         </Section>
       ),
@@ -91,7 +78,7 @@ export const SectionsRenderer = ({
 
   return (
     <>
-      <div className="mx-auto max-w-6xl px-4 pt-4 lg:px-6">
+      <div className="mx-auto flex max-w-6xl justify-center px-4 pt-4 lg:px-6">
         <SectionOrderControl onChange={setOrder} />
       </div>
       {order.map((key) => (
@@ -100,12 +87,14 @@ export const SectionsRenderer = ({
       <Section id="contact" title="Contact">
         <div className="grid gap-6 md:grid-cols-[1.2fr_0.8fr]">
           <ContactForm />
-          <div className="glass rounded-2xl border p-4 text-sm shadow-glass">
-            <p className="font-semibold text-white">Let's work together</p>
-            <p className="text-slate-200">
-              Email: rimaz@example.com
-              <br />
-              LinkedIn · GitHub · Gmail · Mobile links are in the footer.
+          <div className="glass rounded-2xl border p-6 text-sm shadow-glass">
+            <p className="text-xl font-semibold text-white">Let&apos;s work together</p>
+            <p className="text-lg text-slate-200">Email: rimaz@example.com</p>
+            <p
+              className="mt-5 text-xl text-slate-200"
+              style={{ fontFamily: "cursive" }}
+            >
+              “Simple, fast, reliable software is the best kind of signature.”
             </p>
           </div>
         </div>

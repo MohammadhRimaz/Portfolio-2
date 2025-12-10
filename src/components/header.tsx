@@ -17,6 +17,7 @@ const links = [
 
 export const Header = () => {
   const [open, setOpen] = useState(false);
+  const showAdmin = !!process.env.NEXT_PUBLIC_ADMIN_PASS;
 
   return (
     <header className="sticky top-0 z-50">
@@ -34,6 +35,14 @@ export const Header = () => {
               {link.label}
             </Link>
           ))}
+          {showAdmin && (
+            <Link
+              href="/admin"
+              className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-tight text-slate-200 transition hover:border-cyan-300 hover:text-cyan-200"
+            >
+              Admin
+            </Link>
+          )}
         </nav>
         <div className="flex items-center gap-3">
           <ThemeToggle />
@@ -63,6 +72,15 @@ export const Header = () => {
               {link.label}
             </Link>
           ))}
+          {showAdmin && (
+            <Link
+              href="/admin"
+              className="text-slate-200 transition hover:text-cyan-300"
+              onClick={() => setOpen(false)}
+            >
+              Admin
+            </Link>
+          )}
         </div>
       </div>
     </header>

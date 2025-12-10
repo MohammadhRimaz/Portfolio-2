@@ -13,8 +13,7 @@ const schema = z.object({
   liveUrl: z.string().url(),
   repoUrl: z.string().url(),
   techStack: z.string().min(2),
-  images: z.string().min(2),
-  order: z.coerce.number().optional(),
+  images: z.string().optional().default(""),
   published: z.boolean().default(true)
 });
 
@@ -26,15 +25,18 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [uploadError, setUploadError] = useState("");
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { published: true }
+    defaultValues: { published: true, images: "" }
   });
 
   const loadProjects = async () => {
     if (!supabase) return;
-    const { data } = await supabase.from("projects").select("*").order("order", { ascending: true });
+    const { data } = await supabase.from("projects").select("*").order("inserted_at", { ascending: false });
     if (data) setProjects(data as Project[]);
   };
 
@@ -47,7 +49,13 @@ export default function AdminPage() {
     const payload = {
       ...values,
       techStack: values.techStack.split(",").map((t) => t.trim()),
-      images: values.images.split(",").map((t) => t.trim())
+      images: values.images
+        ? values.images
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : [],
+      published: values.published
     };
     if (editingId) {
       await supabase.from("projects").update(payload).eq("id", editingId);
@@ -68,7 +76,6 @@ export default function AdminPage() {
       repoUrl: project.repoUrl,
       techStack: project.techStack.join(", "),
       images: project.images.join(", "),
-      order: project.order,
       published: project.published
     });
   };
@@ -79,10 +86,38 @@ export default function AdminPage() {
     await loadProjects();
   };
 
-  const sorted = useMemo(
-    () => [...projects].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
-    [projects]
-  );
+  const sorted = useMemo(() => [...projects], [projects]);
+
+  const handleUpload = async (files?: FileList | null) => {
+    if (!files || files.length === 0) return;
+    if (!supabase) {
+      setUploadError("Supabase not configured. Add env vars and bucket project-images.");
+      return;
+    }
+    setUploadError("");
+    const list = Array.from(files).slice(0, 4);
+    setUploading(true);
+    try {
+      const urls: string[] = [];
+      for (const file of list) {
+        const path = `project-images/${Date.now()}-${file.name}`;
+        const { error } = await supabase.storage.from("project-images").upload(path, file);
+        if (error) throw error;
+        const { data } = supabase.storage.from("project-images").getPublicUrl(path);
+        if (data?.publicUrl) urls.push(data.publicUrl);
+      }
+      if (urls.length) {
+        const existing = form.getValues("images") || "";
+        const combined = [...existing.split(",").map((x) => x.trim()).filter(Boolean), ...urls].slice(0, 4);
+        form.setValue("images", combined.join(", "));
+      }
+    } catch (err) {
+      console.error(err);
+      setUploadError("Upload failed. Check bucket permissions.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (!authed) {
     return (
@@ -95,7 +130,12 @@ export default function AdminPage() {
             onSubmit={(e) => {
               e.preventDefault();
               const pass = new FormData(e.currentTarget).get("pass")?.toString();
-              if (pass && pass === ADMIN_PASS) setAuthed(true);
+              if (pass && pass === ADMIN_PASS) {
+                setAuthError("");
+                setAuthed(true);
+              } else {
+                setAuthError("Incorrect password. Try again.");
+              }
             }}
           >
             <input
@@ -106,11 +146,18 @@ export default function AdminPage() {
             />
             <button className="glass rounded-xl px-4 py-2 text-sm font-semibold">Enter</button>
           </form>
+          {authError && <p className="mt-2 text-xs text-rose-300">{authError}</p>}
           {!ADMIN_PASS && (
             <p className="mt-2 text-xs text-rose-300">
               Set NEXT_PUBLIC_ADMIN_PASS env to enable authentication.
             </p>
           )}
+          <a
+            href="/#home"
+            className="mt-4 inline-block text-sm text-cyan-200 underline"
+          >
+            ← Back
+          </a>
         </div>
       </main>
     );
@@ -118,8 +165,18 @@ export default function AdminPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
-      <h1 className="text-3xl font-semibold">Project Management</h1>
-      <p className="text-sm text-slate-200">Create, edit, publish, or delete projects.</p>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-semibold">Project Management</h1>
+          <p className="text-sm text-slate-200">Create, edit, publish, or delete projects.</p>
+        </div>
+        <a
+          href="/#home"
+          className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-tight text-slate-200 transition hover:border-cyan-300"
+        >
+          ← Back
+        </a>
+      </div>
 
       <form
         onSubmit={form.handleSubmit(onSubmit)}
@@ -150,21 +207,53 @@ export default function AdminPage() {
           {...form.register("techStack")}
           className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm"
         />
-        <input
-          placeholder="Images (comma separated)"
-          {...form.register("images")}
-          className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm"
-        />
-        <input
-          placeholder="Order"
-          type="number"
-          {...form.register("order")}
-          className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm"
-        />
+        <input type="hidden" {...form.register("images")} />
+        <label className="text-xs text-slate-300">
+          Upload up to 4 images (stored in Supabase bucket `project-images`)
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            max={4}
+            className="mt-2 block w-full cursor-pointer rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-cyan-600 file:px-3 file:py-2 file:text-white"
+            onChange={(e) => handleUpload(e.target.files)}
+            disabled={uploading}
+          />
+        </label>
+        {uploadError && <p className="text-xs text-rose-300">{uploadError}</p>}
+        <div className="flex flex-wrap gap-2">
+          {form
+            .watch("images")
+            ?.split(",")
+            .map((url) => url.trim())
+            .filter(Boolean)
+            .map((url) => (
+              <div key={url} className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-xs">
+                <span className="line-clamp-1 max-w-[180px]">{url}</span>
+                <button
+                  type="button"
+                  className="text-rose-300"
+                  onClick={() => {
+                    const next = (form.getValues("images") || "")
+                      .split(",")
+                      .map((x) => x.trim())
+                      .filter((x) => x && x !== url)
+                      .join(", ");
+                    form.setValue("images", next);
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+        </div>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" {...form.register("published")} />
           Published
         </label>
+        <p className="text-xs text-slate-300">
+          Published makes the project visible on the public portfolio. Uncheck to keep it hidden (draft).
+        </p>
         <button className="glass w-fit rounded-full px-4 py-2 text-sm font-semibold">
           {editingId ? "Update project" : "Create project"}
         </button>
@@ -176,9 +265,7 @@ export default function AdminPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-lg font-semibold">{project.title}</p>
-                <p className="text-xs text-cyan-200">
-                  Order {project.order ?? "-"} · {project.published ? "Published" : "Draft"}
-                </p>
+                <p className="text-xs text-cyan-200">{project.published ? "Published" : "Draft"}</p>
               </div>
               <div className="flex gap-2 text-sm">
                 <button className="rounded-full bg-white/10 px-3 py-1" onClick={() => edit(project)}>
