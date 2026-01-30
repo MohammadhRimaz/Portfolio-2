@@ -15,10 +15,10 @@ body {
 }
 
 html.light body {
-  background: radial-gradient(circle at 12% 18%, rgba(148, 163, 184, 0.22) 8%, transparent 18%),
-    radial-gradient(circle at 88% 12%, rgba(191, 219, 254, 0.18) 10%, transparent 24%),
-    radial-gradient(circle at 42% 78%, rgba(186, 230, 253, 0.18) 12%, transparent 24%),
-    #f8fafc;
+  background: radial-gradient(circle at 12% 18%, rgba(148, 163, 184, 0.15) 8%, transparent 18%),
+    radial-gradient(circle at 88% 12%, rgba(191, 219, 254, 0.12) 10%, transparent 24%),
+    radial-gradient(circle at 42% 78%, rgba(186, 230, 253, 0.12) 12%, transparent 24%),
+    #f1f5f9;
   color: #0f172a;
 }
 
@@ -29,8 +29,9 @@ html.light body {
 }
 
 .light .glass {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(15, 23, 42, 0.06);
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(15, 23, 42, 0.2);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .scrollbar-hide::-webkit-scrollbar {
@@ -64,7 +65,35 @@ html.light .glass {
   color: #0f172a;
 }
 
-html.light .glass.border {
-  border-color: rgba(15, 23, 42, 0.08);
+html.light .glass.border,
+html.light .glass {
+  border-color: rgba(15, 23, 42, 0.2) !important;
+}
+
+html.light .border {
+  border-color: rgba(15, 23, 42, 0.2) !important;
+}
+
+html.light .shadow-glass {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.05);
+}
+
+/* Make all borders more visible in light mode */
+html.light [class*="border-white"],
+html.light [class*="border-white/"] {
+  border-color: rgba(15, 23, 42, 0.2) !important;
+}
+
+html.light input[type="text"],
+html.light input[type="email"],
+html.light textarea {
+  border-color: rgba(15, 23, 42, 0.2) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+html.light input[type="text"]:focus,
+html.light input[type="email"]:focus,
+html.light textarea:focus {
+  border-color: rgba(14, 165, 233, 0.5) !important;
 }
 
