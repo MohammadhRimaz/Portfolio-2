@@ -9,10 +9,29 @@ type Props = {
   sticky?: boolean;
 };
 
+function normalizeImages(project: Project): string[] {
+  const raw = project.images;
+  if (Array.isArray(raw) && raw.length > 0) return raw;
+  if (typeof raw === "string" && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw) as string[];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return raw
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+  }
+  return [];
+}
+
+const PLACEHOLDER_IMAGE =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect fill='%23475569' width='400' height='300'/%3E%3Ctext fill='%2394a3b8' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14'%3ENo image%3C/text%3E%3C/svg%3E";
+
 export const ProjectCard = ({ project, sticky }: Props) => {
-  const mainImage =
-    project.images[0] ??
-    "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=1200&q=80";
+  const images = normalizeImages(project);
+  const mainImage = images[0] ?? PLACEHOLDER_IMAGE;
 
   return (
     <motion.article
@@ -30,11 +49,11 @@ export const ProjectCard = ({ project, sticky }: Props) => {
             className="h-56 w-full object-cover transition duration-500 group-hover:scale-105"
           />
         </div>
-        {project.images.length > 1 && (
+        {images.length > 1 && (
           <div className="mt-3 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {project.images.map((img, idx) => (
+            {images.map((img, idx) => (
               <img
-                key={img}
+                key={`${img}-${idx}`}
                 src={img}
                 alt={`${project.title} ${idx + 1}`}
                 className="h-20 w-32 flex-none rounded-lg object-cover"
@@ -69,17 +88,18 @@ export const ProjectCard = ({ project, sticky }: Props) => {
         </div>
         <p className="text-sm text-slate-200">{project.description}</p>
         <div className="flex flex-wrap gap-2">
-          {project.techStack.map((tech) => (
-            <span
-              key={tech}
-              className="rounded-full bg-white/10 px-3 py-1 text-xs text-cyan-200"
-            >
-              {tech}
-            </span>
-          ))}
+          {(Array.isArray(project.techStack) ? project.techStack : []).map(
+            (tech) => (
+              <span
+                key={tech}
+                className="rounded-full bg-white/10 px-3 py-1 text-xs text-cyan-200"
+              >
+                {tech}
+              </span>
+            ),
+          )}
         </div>
       </div>
     </motion.article>
   );
 };
-

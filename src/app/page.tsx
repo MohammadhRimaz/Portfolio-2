@@ -1,13 +1,12 @@
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { SectionsRenderer } from "@/components/sections-renderer";
-import { getProjects, getTestimonials, getExperiences } from "@/lib/content";
+import { getTestimonials, getExperiences } from "@/lib/content";
 
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-  const [projects, testimonials, experiences] = await Promise.all([
-    getProjects(),
+  const [testimonials, experiences] = await Promise.all([
     getTestimonials(),
     getExperiences(),
   ]);
@@ -66,11 +65,7 @@ export default async function Page() {
         </div>
       </div>
 
-      <SectionsRenderer
-        projects={projects}
-        testimonials={testimonials}
-        experiences={experiences}
-      />
+      <SectionsRenderer testimonials={testimonials} experiences={experiences} />
       <Footer />
     </main>
   );

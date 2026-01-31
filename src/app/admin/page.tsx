@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,6 +29,39 @@ export default function AdminPage() {
   const [authError, setAuthError] = useState("");
   const [uploadError, setUploadError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [fileInputKey, setFileInputKey] = useState(0);
+  const isBusy = isSubmitting || deletingId !== null || uploading;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const adminPassRef = useRef<string>("");
+
+  function normalizeProjectRow(row: Record<string, unknown>): Project {
+    const images = row.images;
+    const imagesArray = Array.isArray(images)
+      ? (images as string[]).filter(
+          (u): u is string => typeof u === "string" && u.length > 0,
+        )
+      : typeof images === "string" && images.trim()
+      ? images
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+    return {
+      id: String(row.id),
+      title: String(row.title),
+      description: String(row.description),
+      techStack: Array.isArray(row.techStack)
+        ? (row.techStack as string[])
+        : [],
+      liveUrl: String(row.liveUrl ?? row.liveurl ?? ""),
+      repoUrl: String(row.repoUrl ?? row.repourl ?? ""),
+      images: imagesArray,
+      published: Boolean(row.published),
+      inserted_at:
+        row.inserted_at != null ? String(row.inserted_at) : undefined,
+    } as Project;
+  }
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -41,7 +74,8 @@ export default function AdminPage() {
       .from("projects")
       .select("*")
       .order("inserted_at", { ascending: false });
-    if (data) setProjects(data as Project[]);
+    if (data)
+      setProjects((data as Record<string, unknown>[]).map(normalizeProjectRow));
   };
 
   useEffect(() => {
@@ -50,44 +84,74 @@ export default function AdminPage() {
 
   const onSubmit = async (values: FormData) => {
     if (!supabase) return;
-    const payload = {
-      ...values,
-      techStack: values.techStack.split(",").map((t) => t.trim()),
-      images: values.images
-        ? values.images
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean)
-        : [],
-      published: values.published,
-    };
-    if (editingId) {
-      await supabase.from("projects").update(payload).eq("id", editingId);
-    } else {
-      await supabase.from("projects").insert(payload);
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        title: values.title,
+        description: values.description,
+        liveUrl: values.liveUrl,
+        repoUrl: values.repoUrl,
+        techStack: values.techStack
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+        images: values.images
+          ? values.images
+              .split(",")
+              .map((t) => t.trim())
+              .filter(Boolean)
+          : [],
+        published: Boolean(values.published),
+      };
+      if (editingId) {
+        await supabase.from("projects").update(payload).eq("id", editingId);
+      } else {
+        await supabase.from("projects").insert(payload);
+      }
+      form.reset({
+        title: "",
+        description: "",
+        liveUrl: "",
+        repoUrl: "",
+        techStack: "",
+        images: "",
+        published: true,
+      });
+      setEditingId(null);
+      setFileInputKey((k) => k + 1);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      await loadProjects();
+    } finally {
+      setIsSubmitting(false);
     }
-    form.reset({ published: true });
-    setEditingId(null);
-    await loadProjects();
   };
 
   const edit = (project: Project) => {
     setEditingId(project.id);
+    const images = Array.isArray(project.images) ? project.images : [];
     form.reset({
       title: project.title,
       description: project.description,
       liveUrl: project.liveUrl,
       repoUrl: project.repoUrl,
-      techStack: project.techStack.join(", "),
-      images: project.images.join(", "),
+      techStack: (Array.isArray(project.techStack)
+        ? project.techStack
+        : []
+      ).join(", "),
+      images: images.join(", "),
       published: project.published,
     });
   };
 
   const remove = async (id: string) => {
     if (!supabase) return;
-    await supabase.from("projects").delete().eq("id", id);
-    await loadProjects();
+    setDeletingId(id);
+    try {
+      await supabase.from("projects").delete().eq("id", id);
+      await loadProjects();
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const sorted = useMemo(() => [...projects], [projects]);
@@ -152,6 +216,7 @@ export default function AdminPage() {
                 ?.toString();
               if (pass && pass === ADMIN_PASS) {
                 setAuthError("");
+                adminPassRef.current = pass;
                 setAuthed(true);
               } else {
                 setAuthError("Incorrect password. Try again.");
@@ -212,6 +277,7 @@ export default function AdminPage() {
           placeholder="Title"
           {...form.register("title")}
           className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm"
+          disabled={isBusy}
         />
         <textarea
           placeholder="Description"
@@ -222,28 +288,32 @@ export default function AdminPage() {
           placeholder="Live URL"
           {...form.register("liveUrl")}
           className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm"
+          disabled={isBusy}
         />
         <input
           placeholder="Repo URL"
           {...form.register("repoUrl")}
           className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm"
+          disabled={isBusy}
         />
         <input
           placeholder="Tech stack (comma separated)"
           {...form.register("techStack")}
           className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm"
+          disabled={isBusy}
         />
         <input type="hidden" {...form.register("images")} />
         <label className="text-xs text-slate-300">
           Upload up to 4 images (stored in Supabase bucket `project-images`)
           <input
+            ref={fileInputRef}
+            key={fileInputKey}
             type="file"
             accept="image/*"
             multiple
-            max={4}
             className="mt-2 block w-full cursor-pointer rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-cyan-600 file:px-3 file:py-2 file:text-white"
             onChange={(e) => handleUpload(e.target.files)}
-            disabled={uploading}
+            disabled={uploading || isBusy}
           />
         </label>
         {uploadError && <p className="text-xs text-rose-300">{uploadError}</p>}
@@ -277,7 +347,11 @@ export default function AdminPage() {
             ))}
         </div>
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" {...form.register("published")} />
+          <input
+            type="checkbox"
+            {...form.register("published")}
+            disabled={isBusy}
+          />
           Published
         </label>
         <p className="text-xs text-slate-300">
@@ -286,10 +360,12 @@ export default function AdminPage() {
         </p>
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isBusy}
           className="glass w-fit rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting
+          {uploading
+            ? "Uploading images…"
+            : isSubmitting
             ? editingId
               ? "Updating…"
               : "Creating…"
@@ -314,16 +390,20 @@ export default function AdminPage() {
               </div>
               <div className="flex gap-2 text-sm">
                 <button
-                  className="rounded-full bg-white/10 px-3 py-1"
+                  type="button"
+                  className="rounded-full bg-white/10 px-3 py-1 disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={() => edit(project)}
+                  disabled={isBusy}
                 >
                   Edit
                 </button>
                 <button
-                  className="rounded-full bg-rose-500/80 px-3 py-1 text-white"
+                  type="button"
+                  className="rounded-full bg-rose-500/80 px-3 py-1 text-white disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={() => remove(project.id)}
+                  disabled={isBusy}
                 >
-                  Delete
+                  {deletingId === project.id ? "Deleting…" : "Delete"}
                 </button>
               </div>
             </div>
