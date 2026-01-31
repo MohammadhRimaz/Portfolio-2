@@ -3,11 +3,13 @@ import { Footer } from "@/components/footer";
 import { SectionsRenderer } from "@/components/sections-renderer";
 import { getProjects, getTestimonials, getExperiences } from "@/lib/content";
 
+export const dynamic = "force-dynamic";
+
 export default async function Page() {
   const [projects, testimonials, experiences] = await Promise.all([
     getProjects(),
     getTestimonials(),
-    getExperiences()
+    getExperiences(),
   ]);
 
   return (
@@ -28,8 +30,8 @@ export default async function Page() {
                 Building modern, resilient web apps with Next.js + Supabase.
               </h1>
               <p className="text-lg text-slate-200">
-                I design and ship product-ready experiences: dashboards, SaaS, AI tools, and content
-                sites with clean UI and smooth animations.
+                I design and ship product-ready experiences: dashboards, SaaS,
+                AI tools, and content sites with clean UI and smooth animations.
               </p>
               <div className="flex flex-wrap gap-3">
                 <a
@@ -73,5 +75,3 @@ export default async function Page() {
     </main>
   );
 }
-
-

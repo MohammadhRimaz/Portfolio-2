@@ -14,7 +14,7 @@ const schema = z.object({
   repoUrl: z.string().url(),
   techStack: z.string().min(2),
   images: z.string().optional().default(""),
-  published: z.boolean().default(true)
+  published: z.boolean().default(true),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -28,15 +28,19 @@ export default function AdminPage() {
   const [uploading, setUploading] = useState(false);
   const [authError, setAuthError] = useState("");
   const [uploadError, setUploadError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { published: true, images: "" }
+    defaultValues: { published: true, images: "" },
   });
 
   const loadProjects = async () => {
     if (!supabase) return;
-    const { data } = await supabase.from("projects").select("*").order("inserted_at", { ascending: false });
+    const { data } = await supabase
+      .from("projects")
+      .select("*")
+      .order("inserted_at", { ascending: false });
     if (data) setProjects(data as Project[]);
   };
 
@@ -55,7 +59,7 @@ export default function AdminPage() {
             .map((t) => t.trim())
             .filter(Boolean)
         : [],
-      published: values.published
+      published: values.published,
     };
     if (editingId) {
       await supabase.from("projects").update(payload).eq("id", editingId);
@@ -76,7 +80,7 @@ export default function AdminPage() {
       repoUrl: project.repoUrl,
       techStack: project.techStack.join(", "),
       images: project.images.join(", "),
-      published: project.published
+      published: project.published,
     });
   };
 
@@ -91,7 +95,9 @@ export default function AdminPage() {
   const handleUpload = async (files?: FileList | null) => {
     if (!files || files.length === 0) return;
     if (!supabase) {
-      setUploadError("Supabase not configured. Add env vars and bucket project-images.");
+      setUploadError(
+        "Supabase not configured. Add env vars and bucket project-images.",
+      );
       return;
     }
     setUploadError("");
@@ -101,14 +107,24 @@ export default function AdminPage() {
       const urls: string[] = [];
       for (const file of list) {
         const path = `project-images/${Date.now()}-${file.name}`;
-        const { error } = await supabase.storage.from("project-images").upload(path, file);
+        const { error } = await supabase.storage
+          .from("project-images")
+          .upload(path, file);
         if (error) throw error;
-        const { data } = supabase.storage.from("project-images").getPublicUrl(path);
+        const { data } = supabase.storage
+          .from("project-images")
+          .getPublicUrl(path);
         if (data?.publicUrl) urls.push(data.publicUrl);
       }
       if (urls.length) {
         const existing = form.getValues("images") || "";
-        const combined = [...existing.split(",").map((x) => x.trim()).filter(Boolean), ...urls].slice(0, 4);
+        const combined = [
+          ...existing
+            .split(",")
+            .map((x) => x.trim())
+            .filter(Boolean),
+          ...urls,
+        ].slice(0, 4);
         form.setValue("images", combined.join(", "));
       }
     } catch (err) {
@@ -124,12 +140,16 @@ export default function AdminPage() {
       <main className="mx-auto flex min-h-screen max-w-4xl flex-col items-center justify-center gap-4 px-4">
         <div className="glass w-full rounded-3xl border p-6 shadow-glass">
           <h1 className="text-2xl font-semibold">Admin Access</h1>
-          <p className="text-sm text-slate-200">Enter the admin passphrase to manage projects.</p>
+          <p className="text-sm text-slate-200">
+            Enter the admin passphrase to manage projects.
+          </p>
           <form
             className="mt-4 flex gap-3"
             onSubmit={(e) => {
               e.preventDefault();
-              const pass = new FormData(e.currentTarget).get("pass")?.toString();
+              const pass = new FormData(e.currentTarget)
+                .get("pass")
+                ?.toString();
               if (pass && pass === ADMIN_PASS) {
                 setAuthError("");
                 setAuthed(true);
@@ -144,9 +164,13 @@ export default function AdminPage() {
               className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-cyan-300"
               placeholder="Admin password"
             />
-            <button className="glass rounded-xl px-4 py-2 text-sm font-semibold">Enter</button>
+            <button className="glass rounded-xl px-4 py-2 text-sm font-semibold">
+              Enter
+            </button>
           </form>
-          {authError && <p className="mt-2 text-xs text-rose-300">{authError}</p>}
+          {authError && (
+            <p className="mt-2 text-xs text-rose-300">{authError}</p>
+          )}
           {!ADMIN_PASS && (
             <p className="mt-2 text-xs text-rose-300">
               Set NEXT_PUBLIC_ADMIN_PASS env to enable authentication.
@@ -168,7 +192,9 @@ export default function AdminPage() {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold">Project Management</h1>
-          <p className="text-sm text-slate-200">Create, edit, publish, or delete projects.</p>
+          <p className="text-sm text-slate-200">
+            Create, edit, publish, or delete projects.
+          </p>
         </div>
         <a
           href="/#home"
@@ -228,7 +254,10 @@ export default function AdminPage() {
             .map((url) => url.trim())
             .filter(Boolean)
             .map((url) => (
-              <div key={url} className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-xs">
+              <div
+                key={url}
+                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-xs"
+              >
                 <span className="line-clamp-1 max-w-[180px]">{url}</span>
                 <button
                   type="button"
@@ -252,23 +281,42 @@ export default function AdminPage() {
           Published
         </label>
         <p className="text-xs text-slate-300">
-          Published makes the project visible on the public portfolio. Uncheck to keep it hidden (draft).
+          Published makes the project visible on the public portfolio. Uncheck
+          to keep it hidden (draft).
         </p>
-        <button className="glass w-fit rounded-full px-4 py-2 text-sm font-semibold">
-          {editingId ? "Update project" : "Create project"}
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="glass w-fit rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isSubmitting
+            ? editingId
+              ? "Updating…"
+              : "Creating…"
+            : editingId
+            ? "Update project"
+            : "Create project"}
         </button>
       </form>
 
       <div className="mt-8 grid gap-3">
         {sorted.map((project) => (
-          <div key={project.id} className="glass rounded-2xl border p-4 shadow-glass">
+          <div
+            key={project.id}
+            className="glass rounded-2xl border p-4 shadow-glass"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-lg font-semibold">{project.title}</p>
-                <p className="text-xs text-cyan-200">{project.published ? "Published" : "Draft"}</p>
+                <p className="text-xs text-cyan-200">
+                  {project.published ? "Published" : "Draft"}
+                </p>
               </div>
               <div className="flex gap-2 text-sm">
-                <button className="rounded-full bg-white/10 px-3 py-1" onClick={() => edit(project)}>
+                <button
+                  className="rounded-full bg-white/10 px-3 py-1"
+                  onClick={() => edit(project)}
+                >
                   Edit
                 </button>
                 <button
@@ -285,5 +333,3 @@ export default function AdminPage() {
     </main>
   );
 }
-
-

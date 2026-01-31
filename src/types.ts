@@ -9,6 +9,7 @@ export type Project = {
   featured?: boolean;
   published: boolean;
   order?: number;
+  inserted_at?: string;
 };
 
 export type Testimonial = {
@@ -27,9 +28,3 @@ export type Experience = {
   end: string;
   summary: string;
 };
-
-
-
-
-
-
