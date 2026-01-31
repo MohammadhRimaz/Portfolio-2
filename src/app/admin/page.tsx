@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/lib/supabaseClient";
@@ -347,10 +347,18 @@ export default function AdminPage() {
             ))}
         </div>
         <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            {...form.register("published")}
-            disabled={isBusy}
+          <Controller
+            control={form.control}
+            name="published"
+            render={({ field }) => (
+              <input
+                type="checkbox"
+                checked={field.value}
+                onChange={(e) => field.onChange(e.target.checked)}
+                onBlur={field.onBlur}
+                disabled={isBusy}
+              />
+            )}
           />
           Published
         </label>
